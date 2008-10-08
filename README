@@ -1,0 +1,5 @@
+
+The Simple Queue Service is a tiny littley XML-RPC based queue server
+that implements the minimal functionality to manage queues and
+messages.
+
