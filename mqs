@@ -1,0 +1,82 @@
+#!/usr/bin/env python2.5
+
+
+import xmlrpclib
+
+from twisted.web import xmlrpc
+from twisted.internet import defer
+
+
+class MiniQueueService(object):
+
+    def __init__(self):
+        self.queues = {}
+
+    def createQueue(self, queueName):
+        if not self.queues.has_key(queueName):
+            self.queues[queueName] = []
+
+    def deleteQueue(self, queueName):
+        if not self.queues.has_key(queueName):
+            return xmlrpclib.Fault(-1, "Queue '%s' does not exist" % queueName)
+        del self.queues[queueName]
+
+    def listQueues(self):
+        return sorted(self.queues.keys())
+
+    def receiveMessage(self, queueName):
+        if not self.queues.has_key(queueName):
+            return xmlrpclib.Fault(-1, "Queue '%s' does not exist" % queueName)
+        queue = self.queues[queueName]
+        if len(queue):
+            return queue.pop()
+        else:
+            return None
+        
+    def sendMessage(self, queueName, message):
+        if not self.queues.has_key(queueName):
+            return xmlrpclib.Fault(-1, "Queue '%s' does not exist" % queueName)
+        queue = self.queues[queueName]
+        queue.insert(0, message)
+
+
+class MiniQueueServiceEndpoint(xmlrpc.XMLRPC):
+
+    allowNone = True
+
+    def __init__(self, queueService):
+        self.queueService = queueService
+
+    def xmlrpc_hello(self):
+        return "Hello"
+
+    def xmlrpc_createQueue(self, queueName):
+        return self.queueService.createQueue(queueName)
+
+    def xmlrpc_deleteQueue(self, queueName):
+        return self.queueService.deleteQueue(queueName)
+
+    def xmlrpc_listQueues(self):
+        return self.queueService.listQueues()
+
+    def xmlrpc_receiveMessage(self, queueName):
+        return self.queueService.receiveMessage(queueName)
+
+    def xmlrpc_sendMessage(self, queueName, message):
+        return self.queueService.sendMessage(queueName, message)
+
+
+def main():
+    
+    from twisted.internet import reactor
+    from twisted.web import resource, server
+
+    root = resource.Resource()
+    root.putChild('MiniQueueService', MiniQueueServiceEndpoint(MiniQueueService()))
+    reactor.listenTCP(8080, server.Site(root))
+    reactor.run()
+
+
+if __name__ == '__main__':
+
+    main()

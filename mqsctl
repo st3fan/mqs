@@ -1,0 +1,46 @@
+#!/usr/bin/env python2.5
+
+import sys, xmlrpclib
+
+METHODS = ('listQueues', 'createQueue', 'deleteQueue', 'sendMessage', 'receiveMessage')
+
+if __name__ == '__main__':
+
+    if len(sys.argv) < 3 or sys.argv[2] not in METHODS:
+        print "usage: msqctl <url> <%s> [parameters...]" % "|".join(METHODS)
+        sys.exit(1)
+
+    mqs = xmlrpclib.Server(sys.argv[1])
+
+    if sys.argv[2] == 'listQueues':
+        if len(sys.argv) != 3:
+            print "usage: msqctl <url> listQueues"
+            sys.exit(1)
+        for queueName in mqs.listQueues():
+            print queueName
+
+    elif sys.argv[2] == 'createQueue':
+        if len(sys.argv) != 4:
+            print "usage: msqctl <url> createQueue <queueName>"
+            sys.exit(1)
+        mqs.createQueue(sys.argv[3])
+
+    elif sys.argv[2] == 'deleteQueue':
+        if len(sys.argv) != 4:
+            print "usage: msqctl <url> deleteQueue <queueName>"
+            sys.exit(1)
+        mqs.createQueue(sys.argv[3])
+
+    elif sys.argv[2] == 'sendMessage':
+        if len(sys.argv) != 5:
+            print "usage: msqctl <url> sendMessage <queueName> <message>"
+            sys.exit(1)
+        mqs.sendMessage(sys.argv[3], sys.argv[4])
+
+    elif sys.argv[2] == 'receiveMessage':
+        if len(sys.argv) != 4:
+            print "usage: msqctl <url> receiveMessage <queueName>"
+            sys.exit(1)
+        message = mqs.receiveMessage(sys.argv[3])
+        if message:
+            print message
