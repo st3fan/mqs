@@ -1,5 +1,75 @@
 
-The Simple Queue Service is a tiny littley XML-RPC based queue server
+MINI QUEUE SERVICE
+
+*What is this*
+
+The Mini Queue Service is a tiny little XML-RPC based queue server
 that implements the minimal functionality to manage queues and
 messages.
 
+*Requirements*
+
+The Mini Queue Service requires Python 2.5.2 and the Twisted framework
+to be installed. It has been tested on OS X with Python 2.5.2 and
+Twisted 8.0.1.
+
+*Service Controller*
+
+The 'mqsctl' tool can be used to control mqs from the command line. It
+knows the following tricks:
+
+  ./mqsctl <mqs-url> createQueue <queueName>
+  ./mqsctl <mqs-url> createQueue <deleteQueue>
+  ./mqsctl <mqs-url> listQueues
+  ./mqsctl <mqs-url> sendMessage <queueName> <message>
+  ./mqsctl <mqs-url> receiveMessage <queueName>
+
+*Service API*
+
+The following calls are currently implemented in the XML-RPC
+interface:
+
+  createQueue(queueName)
+  deleteQueue(queueName)
+  [queues] = listQueues()
+
+  sendMessage(queueName, message)
+  message = receiveMessage(queueName)
+
+*Python Example*
+
+Assuming mqs is running on it's default port 9090, we can create a
+queue as follows:
+
+  export MQS=http://localhost:9090/MiniQueueService
+  ./mqsctl $MQS createQueue FilesToProcess
+  ./mqsctl $MQS sendMessage FilesToProcess "http://some/file.jpg"
+
+  ./mqsctl 
+
+Then using the following Python code we can periodically poll the
+queue and process the messages:
+
+  mqs = xmlrpclib.Server("http://localhost:9090/MiniQueueService")
+
+  while True:
+     time.sleep(1)
+     message = mqs.receiveMessage("FilesToProcess")
+     if message:
+        print "Processing %s" % message
+
+*Possible Uses*
+
+The Mini Queue Service is used 
+
+*Future Improvements*
+
+For my use of MQS I don't need any of the following but it would be
+nice have:
+
+Persistent Queues - To allow for service restarts without losing
+messages.
+
+More complete API - Implement a more complete copy of Amazon's SQS API
+that also included message timeouts (visibility timeout), a
+PeekMessage call and message Ids.
