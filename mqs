@@ -36,6 +36,8 @@ class MiniQueueService(object):
     def sendMessage(self, queueName, message):
         if not self.queues.has_key(queueName):
             return xmlrpclib.Fault(-1, "Queue '%s' does not exist" % queueName)
+        if type(message) not in (str,unicode):
+            return xmlrpclib.Fault(-1, "Message must be of type text or unicode")
         queue = self.queues[queueName]
         queue.insert(0, message)
 
