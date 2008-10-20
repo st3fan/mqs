@@ -7,6 +7,11 @@ from twisted.web import xmlrpc
 from twisted.internet import defer
 
 
+class MiniQueueServiceException(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
 class MiniQueueService(object):
 
     def __init__(self):
@@ -18,7 +23,7 @@ class MiniQueueService(object):
 
     def deleteQueue(self, queueName):
         if not self.queues.has_key(queueName):
-            return xmlrpclib.Fault(-1, "Queue '%s' does not exist" % queueName)
+            raise MiniQueueServiceException("Queue '%s' does not exist" % queueName)
         del self.queues[queueName]
 
     def listQueues(self):
@@ -26,7 +31,7 @@ class MiniQueueService(object):
 
     def receiveMessage(self, queueName):
         if not self.queues.has_key(queueName):
-            return xmlrpclib.Fault(-1, "Queue '%s' does not exist" % queueName)
+            raise MiniQueueServiceException("Queue '%s' does not exist" % queueName)
         queue = self.queues[queueName]
         if len(queue):
             return queue.pop()
@@ -35,9 +40,9 @@ class MiniQueueService(object):
         
     def sendMessage(self, queueName, message):
         if not self.queues.has_key(queueName):
-            return xmlrpclib.Fault(-1, "Queue '%s' does not exist" % queueName)
+            raise MiniQueueServiceException("Queue '%s' does not exist" % queueName)
         if type(message) not in (str,unicode):
-            return xmlrpclib.Fault(-1, "Message must be of type text or unicode")
+            raise MiniQueueServiceException("Message must be of type text or unicode")
         queue = self.queues[queueName]
         queue.insert(0, message)
 
@@ -49,23 +54,35 @@ class MiniQueueServiceEndpoint(xmlrpc.XMLRPC):
     def __init__(self, queueService):
         self.queueService = queueService
 
-    def xmlrpc_hello(self):
-        return "Hello"
-
     def xmlrpc_createQueue(self, queueName):
-        return self.queueService.createQueue(queueName)
+        try:
+            return self.queueService.createQueue(queueName)
+        except MiniQueueServiceException, e:
+            return xmlrpclib.Fault(-1, e.message)
 
     def xmlrpc_deleteQueue(self, queueName):
-        return self.queueService.deleteQueue(queueName)
+        try:
+            return self.queueService.deleteQueue(queueName)
+        except MiniQueueServiceException, e:
+            return xmlrpclib.Fault(-1, e.message)
 
     def xmlrpc_listQueues(self):
-        return self.queueService.listQueues()
+        try:
+            return self.queueService.listQueues()
+        except MiniQueueServiceException, e:
+            return xmlrpclib.Fault(-1, e.message)
 
     def xmlrpc_receiveMessage(self, queueName):
-        return self.queueService.receiveMessage(queueName)
+        try:
+            return self.queueService.receiveMessage(queueName)
+        except MiniQueueServiceException, e:
+            return xmlrpclib.Fault(-1, e.message)
 
     def xmlrpc_sendMessage(self, queueName, message):
-        return self.queueService.sendMessage(queueName, message)
+        try:
+            return self.queueService.sendMessage(queueName, message)
+        except MiniQueueServiceException, e:
+            return xmlrpclib.Fault(-1, e.message)
 
 
 def main():
