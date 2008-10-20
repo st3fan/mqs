@@ -67,16 +67,32 @@ class MiniQueueServiceEndpoint(xmlrpc.XMLRPC):
 
 
 def main():
-    
+
+    import sys
+
     from twisted.internet import reactor
     from twisted.web import resource, server
+    from twisted.python import usage
+
+    class Options(usage.Options):
+        optFlags = [["debug", "d", "Debug mode (verbose)"]]
+        optParameters = [["port", "p", 9090, "The port to bind to", int]]
+
+    config = Options()
+    
+    try:
+        config.parseOptions()
+    except usage.UsageError, errortext:
+        print '%s: %s' % (sys.argv[0], errortext)
+        print '%s: Try --help for usage details.' % (sys.argv[0])
+
+    print "Starting MQS service on http://localhost:%d/MiniQueueService" % (config['port'])
 
     root = resource.Resource()
     root.putChild('MiniQueueService', MiniQueueServiceEndpoint(MiniQueueService()))
-    reactor.listenTCP(8080, server.Site(root))
+    reactor.listenTCP(config['port'], server.Site(root))
     reactor.run()
 
 
 if __name__ == '__main__':
-
     main()
